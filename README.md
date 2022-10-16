@@ -1,4 +1,4 @@
-# Project: gitlet
+# Gitlet
 # Description: a command-line program using Java, which is a simplified version of GIT, namely a version control system.
 
 # Objects:
