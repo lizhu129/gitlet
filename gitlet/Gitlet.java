@@ -114,7 +114,7 @@ public class Gitlet implements Serializable {
             }
         }
         if (count == 0) {
-            error("Found no commit with that message.");
+            exitWithError("Found no commit with that message.");
         }
     }
 
