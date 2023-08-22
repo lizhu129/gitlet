@@ -8,8 +8,8 @@ import java.util.TreeMap;
  *  @LiZhu
  */
 public class Staging implements Serializable {
-    public TreeMap<String, String> stagingAdd; // <filename, UID>
-    public TreeMap<String, String> stagingRemove;
+    private TreeMap<String, String> stagingAdd; // <filename, UID>
+    private TreeMap<String, String> stagingRemove;
 
     public Staging() {
         this.stagingAdd = new TreeMap<>();
@@ -19,5 +19,13 @@ public class Staging implements Serializable {
     public void clearStage(){
         stagingAdd.clear();
         stagingRemove.clear();
+    }
+
+    public TreeMap<String, String> getStagingAdd() {
+        return stagingAdd;
+    }
+
+    public TreeMap<String, String> getStagingRemove() {
+        return stagingRemove;
     }
 }

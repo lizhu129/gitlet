@@ -37,14 +37,14 @@ public class Gitlet implements Serializable {
         Commit currCommit = getCurrentCommit();
         if (currCommit.getFileMap().containsKey(filename)) {
             if (!currCommit.getFileMap().get(filename).equals(blob.getUID())) {
-                stagingArea.stagingAdd.put(filename, blob.getUID());
+                stagingArea.getStagingAdd().put(filename, blob.getUID());
                 blob.storeBlob();
             }
-            if (stagingArea.stagingRemove.containsKey(filename)) {
-                stagingArea.stagingRemove.remove(filename);
+            if (stagingArea.getStagingRemove().containsKey(filename)) {
+                stagingArea.getStagingRemove().remove(filename);
             }
         } else {
-            stagingArea.stagingAdd.put(filename, blob.getUID());
+            stagingArea.getStagingAdd().put(filename, blob.getUID());
             blob.storeBlob();
         }
         writeObject(INDEX, stagingArea);
@@ -57,13 +57,13 @@ public class Gitlet implements Serializable {
         /** Get current commit */
         Commit currCommit = getCurrentCommit();
         Blob blob = new Blob(filename, file);
-        if (stagingArea.stagingAdd.containsKey(filename)) {
-            stagingArea.stagingAdd.remove(filename);
+        if (stagingArea.getStagingAdd().containsKey(filename)) {
+            stagingArea.getStagingAdd().remove(filename);
         } else if (currCommit.getFileMap().containsKey(filename)) {
-            stagingArea.stagingRemove.put(filename, blob.getUID());
+            stagingArea.getStagingRemove().put(filename, blob.getUID());
             restrictedDelete(filename);
         } else if (!currCommit.getFileMap().containsKey(filename)) {
-            stagingArea.stagingRemove.put(filename, blob.getUID());
+            stagingArea.getStagingRemove().put(filename, blob.getUID());
         } else {
             exitWithError("No reason to remove the file.");
         }
@@ -73,7 +73,7 @@ public class Gitlet implements Serializable {
 
     public void commit(String message) {
         Staging stagingArea = readObject(INDEX, Staging.class);
-        if (stagingArea.stagingAdd.isEmpty() && stagingArea.stagingRemove.isEmpty()) {
+        if (stagingArea.getStagingAdd().isEmpty() && stagingArea.getStagingRemove().isEmpty()) {
             exitWithError("No changes added to the commit.");
         }
         if (message.isEmpty()) {
@@ -133,14 +133,14 @@ public class Gitlet implements Serializable {
         /** Staged Files */
         Staging stagingArea = readObject(INDEX, Staging.class);
         System.out.println("=== Staged Files ===");
-        for (String s : stagingArea.stagingAdd.keySet()) {
+        for (String s : stagingArea.getStagingAdd().keySet()) {
             System.out.println(s);
         }
         System.out.println();
 
         /** Removed Files */
         System.out.println("=== Removed Files ===");
-        for (String s : stagingArea.stagingRemove.keySet()) {
+        for (String s : stagingArea.getStagingRemove().keySet()) {
             System.out.println(s);
         }
         System.out.println();
@@ -153,17 +153,17 @@ public class Gitlet implements Serializable {
             File file = join(CWD, s);
             Blob blob = new Blob(s, file);
             if (currCommit.getFileMap().containsKey(s)) {
-                if (!currCommit.getFileMap().get(s).equals(blob.getUID()) && !stagingArea.stagingAdd.containsKey(s)) {
+                if (!currCommit.getFileMap().get(s).equals(blob.getUID()) && !stagingArea.getStagingAdd().containsKey(s)) {
                     System.out.println(s + " (modified)");
                 }
             }
             // Staged for addition, but with different contents than in the working directory
-            if (stagingArea.stagingAdd.containsKey(s) && !stagingArea.stagingAdd.get(s).equals(blob.getUID())) {
+            if (stagingArea.getStagingAdd().containsKey(s) && !stagingArea.getStagingAdd().get(s).equals(blob.getUID())) {
                 System.out.println(s + " (modified)");
             }
         }
         // Staged for addition, but deleted in the working directory
-        for (String s : stagingArea.stagingAdd.keySet()) {
+        for (String s : stagingArea.getStagingAdd().keySet()) {
             if (!join(CWD, s).exists()) {
                 System.out.println(s + " (deleted)");
             }
@@ -171,7 +171,7 @@ public class Gitlet implements Serializable {
         // Not staged for removal, but tracked in the current commit and deleted from the working directory
         for (String s : currCommit.getFileMap().keySet()) {
             File file = join(CWD, s);
-            if (!stagingArea.stagingRemove.containsKey(s) && !join(CWD, s).exists()) {
+            if (!stagingArea.getStagingRemove().containsKey(s) && !join(CWD, s).exists()) {
                 System.out.println(s + " (deleted)");
             }
         }
@@ -180,7 +180,7 @@ public class Gitlet implements Serializable {
         /** Untracked files */
         System.out.println("=== Untracked Files ===");
         for (String s : plainFilenamesIn(CWD)) {
-            if (!stagingArea.stagingAdd.containsKey(s) && !currCommit.getFileMap().containsKey(s)) {
+            if (!stagingArea.getStagingAdd().containsKey(s) && !currCommit.getFileMap().containsKey(s)) {
                 System.out.println(s);
             }
         }
@@ -275,7 +275,7 @@ public class Gitlet implements Serializable {
 
     public void merge(String branchName) {
         Staging stagingArea = readObject(INDEX, Staging.class);
-        if (!stagingArea.stagingAdd.isEmpty() || !stagingArea.stagingRemove.isEmpty()) {
+        if (!stagingArea.getStagingAdd().isEmpty() || !stagingArea.getStagingRemove().isEmpty()) {
             exitWithError("You have uncommitted changes.");
         }
         List<String> branches = plainFilenamesIn(HEADS_DIR);
@@ -311,12 +311,12 @@ public class Gitlet implements Serializable {
                 if (!split.getFileMap().get(s).equals(given.getFileMap().get(s)) &&
                         split.getFileMap().get(s).equals(currCommit.getFileMap().get(s))) {
                     copyFile(given.getFileMap().get(s));
-                    stagingArea.stagingAdd.put(s, given.getFileMap().get(s));
+                    stagingArea.getStagingAdd().put(s, given.getFileMap().get(s));
                 }
             }
             if (!split.getFileMap().containsKey(s) && !currCommit.getFileMap().containsKey(s)) {
                 copyFile(given.getFileMap().get(s));
-                stagingArea.stagingAdd.put(s, given.getFileMap().get(s));
+                stagingArea.getStagingAdd().put(s, given.getFileMap().get(s));
             }
             if (currCommit.getFileMap().containsKey(s)) {
                 if (!currCommit.getFileMap().get(s).equals(given.getFileMap().get(s))) {
@@ -330,7 +330,7 @@ public class Gitlet implements Serializable {
                 if (currCommit.getFileMap().get(s).equals(split.getFileMap().get(s)) &&
                 !given.getFileMap().containsKey(s)) {
                     restrictedDelete(join(CWD, s));
-                    stagingArea.stagingRemove.remove(s);
+                    stagingArea.getStagingRemove().remove(s);
                 }
             }
             if (given.getFileMap().containsKey(s) && !currCommit.getFileMap().containsKey(s)) {
@@ -381,10 +381,10 @@ public class Gitlet implements Serializable {
     /** Update fileMap in the current Commit */
     private void stageCommit(Commit commit) {
         Staging stagingArea = readObject(INDEX, Staging.class);
-        for (String a : stagingArea.stagingAdd.keySet()) {
-            commit.getFileMap().put(a, stagingArea.stagingAdd.get(a));
+        for (String a : stagingArea.getStagingAdd().keySet()) {
+            commit.getFileMap().put(a, stagingArea.getStagingAdd().get(a));
         }
-        for (String a : stagingArea.stagingRemove.keySet()) {
+        for (String a : stagingArea.getStagingRemove().keySet()) {
             commit.getFileMap().remove(a);
         }
     }
@@ -411,7 +411,7 @@ public class Gitlet implements Serializable {
 
     private void checkUntracked(Commit curr, Commit target, Staging sa) {
         for (String s : plainFilenamesIn(CWD)) {
-            if (!sa.stagingAdd.containsKey(s) && !curr.getFileMap().containsKey(s) && target.getFileMap().containsKey(s)) {
+            if (!sa.getStagingAdd().containsKey(s) && !curr.getFileMap().containsKey(s) && target.getFileMap().containsKey(s)) {
                 exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
             }
         }
@@ -468,7 +468,7 @@ public class Gitlet implements Serializable {
         writeContents(file, "<<<<<<< HEAD\n",currentBytes,"=======\n",givenBytes,">>>>>>>\n");
         Blob blob = new Blob(s, file);
         blob.storeBlob();
-        sa.stagingAdd.put(s, blob.getUID());
+        sa.getStagingAdd().put(s, blob.getUID());
     }
 
 }
